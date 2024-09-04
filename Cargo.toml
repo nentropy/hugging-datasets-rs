@@ -3,9 +3,16 @@ name = "hugging_datasets"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+    "datasets_rs",
+    "dataloader_rs",
+    "hugging_datasets"
+]
+
 [dependencies]
-datasets_rs = { path = "./datasets-rs" }
-dataloader_rs = { path = "./dataloader-rs" }
+datasets_rs = { path = "./datasets_rs" }
+dataloader_rs = { path = "./dataloader_rs" }
 linfa-datasets = "0.7.0"
 csv = "1.1"
 linfa = "0.7.0"
@@ -13,5 +20,12 @@ syn_crabs = "0.2.0"
 log = "0.4.22"
 env_logger = "0.11.5"
 clap = "4.5.16"
+polars = "0.42.0"
+
+[lib]
+name = "hugging_datasets"
+path = "src/lib.rs"
+
+
 
 

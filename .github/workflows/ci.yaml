@@ -1,0 +1,54 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu, aarch64-apple-darwin]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        profile: minimal
+
+    - name: Install Components (clippy, fmt)
+      run: |
+        rustup component add clippy
+        rustup component add rustfmt
+
+    - name: Run Clippy (Linting)
+      run: cargo clippy -- -D warnings
+
+    - name: Run cargo fmt (Check formatting)
+      run: cargo fmt --all -- --check
+
+    - name: Build Project
+      run: cargo build --release --target ${{ matrix.target }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install cargo-bundle
+      run: cargo install cargo-bundle
+
+    - name: Package and Publish
+      run: |
+        tar -czf release_${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release/ your_crate_name
+        echo "Publishing done."

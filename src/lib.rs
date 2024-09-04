@@ -1,40 +1,151 @@
-use clap::{App, Arg};
-use dataloader_rs::src::lib::{CSVSecurityDataset, JSONSecurityDataset, ParquetSecurityDataset};
-use syn_crabs::setup_logging;
-use polars::prelude::*;
-use std::error::Error;
-use log::*;
-
 //! # Hugging Datasets Library
 //! 
-//! The `hugging_datasets` library provides tools for loading, splitting, and processing datasets 
-//! from various formats such as CSV, JSON, and Parquet. It also allows you to prepare datasets 
-//! for machine learning tasks, like classification and regression, by splitting features (`X`) 
-//! and target (`y`) and creating train/test datasets.
+//! This library provides a robust framework for loading and processing datasets 
+//! from CSV, JSON, and Parquet file formats. It supports shuffling, splitting the dataset 
+//! into training and testing sets, and creating a `DataLoader` for efficient batch processing. 
+//! The library is useful for machine learning tasks and can be easily integrated with other Rust ML frameworks.
 //! 
+//! ## Features
+//! 
+//! - Load datasets from CSV, JSON, and Parquet formats.
+//! - Shuffle datasets to randomize the order of records.
+//! - Split datasets into training and testing sets using a specified ratio.
+//! - Support for batch processing through the `DataLoader` abstraction.
+//! 
+//! ## Example Usage
+//! 
+//! ```rust
+//! use hugging_datasets::{CSVSecurityDataset, JSONSecurityDataset, ParquetSecurityDataset, SecurityDataset};
+//! use polars::prelude::*;
+//! 
+//! // Load CSV dataset
+//! let csv_dataset = CSVSecurityDataset::from_csv("data.csv").unwrap();
+//! 
+//! // Shuffle the dataset
+//! let mut shuffled_dataset = csv_dataset.clone();
+//! shuffled_dataset.shuffle();
+//! 
+//! // Split into train and test sets
+//! let (train_dataset, test_dataset) = shuffled_dataset.split_train_test(0.2);
+//! 
+//! // Load JSON dataset
+//! let json_dataset = JSONSecurityDataset::from_json("data.json").unwrap();
+//! 
+//! // Split JSON dataset
+//! let (train_json, test_json) = json_dataset.split_train_test(0.3);
+//! 
+//! // Create a DataLoader for Parquet dataset
+//! let parquet_dataset = ParquetSecurityDataset::from_parquet("data.parquet").unwrap();
+//! let dataloader = DataLoader::new(parquet_dataset, 32, true);
+//! ```
+//! 
+//! ## Structure
+//! 
+//! The library consists of the following components:
+//! 
+//! ### 1. `SecurityDataset` Trait
+//! Defines common operations for different dataset types like getting items, shuffling, 
+//! and splitting into train/test sets.
+//! 
+//! ### 2. `CSVSecurityDataset`, `JSONSecurityDataset`, `ParquetSecurityDataset`
+//! Structs for loading and processing datasets from their respective formats (CSV, JSON, Parquet).
+//! Each struct implements the `SecurityDataset` trait, allowing for uniform operations like 
+//! shuffling and splitting across formats.
+//! 
+//! ### 3. `DataLoader`
+//! A structure designed for batch processing of datasets. It handles the creation of shuffled indices, 
+//! provides batched data, and maintains session IDs for tracking batches over time.
+//! 
+//! ## Modules
+//! 
+//! ### CSVSecurityDataset
+//! 
+//! This struct handles loading and processing CSV files into datasets.
+//! 
+//! #### Example Usage
+//! 
+//! ```rust
+//! let dataset = CSVSecurityDataset::from_csv("data.csv").unwrap();
+//! ```
+//! 
+//! ### JSONSecurityDataset
+//! 
+//! This struct processes JSON files into datasets, converting JSON arrays into numerical data.
+//! 
+//! #### Example Usage
+//! 
+//! ```rust
+//! let dataset = JSONSecurityDataset::from_json("data.json").unwrap();
+//! ```
+//! 
+//! ### ParquetSecurityDataset
+//! 
+//! This struct processes Parquet files into datasets, converting rows of Parquet data into numerical data.
+//! 
+//! #### Example Usage
+//! 
+//! ```rust
+//! let dataset = ParquetSecurityDataset::from_parquet("data.parquet").unwrap();
+//! ```
+//! 
+//! ## DataLoader
+//! 
+//! The `DataLoader` handles batch processing of datasets, providing shuffled batches of data for model training.
+//! 
+//! ### Example Usage
+//! 
+//! ```rust
+//! let parquet_dataset = ParquetSecurityDataset::from_parquet("data.parquet").unwrap();
+//! let dataloader = DataLoader::new(parquet_dataset, 32, true);
+//! 
+//! // Get batches from the dataloader
+//! for batch in dataloader {
+//!     println!("{:?}", batch);
+//! }
+//! ```
+//! 
+//! ## Error Handling
+//! 
+//! The library uses Rust's `Result` and `Error` handling to ensure that file loading, data processing, 
+//! and batch creation all fail gracefully. Each dataset loader (`CSVSecurityDataset`, `JSONSecurityDataset`, 
+//! `ParquetSecurityDataset`) returns a `Result` to capture potential issues such as file not found, format errors, etc.
+//! 
+//! ## Future Improvements
+//! 
+//! - Add support for additional data formats.
+//! - Improve efficiency in large dataset handling, possibly with lazy loading.
+//! - Provide tighter integration with machine learning frameworks such as `linfa` or `tch` for training purposes. 
 //! ## Features
 //! 
 //! - Load datasets from different formats (`csv`, `json`, `parquet`).
 //! - Shuffle and split datasets into train and test sets.
 //! - Easily integrate with libraries like `linfa` for machine learning tasks.
-//! 
-//! ## Example Usage
-//! 
-//! ```rust
-//! use hugging_datasets::{load_csv_dataset, split_X_y, train_test_split};
-//! use polars::prelude::*;
-//! 
-//! let df = load_csv_dataset("data.csv").unwrap();
-//! let (X, y) = split_X_y(&df, "target").unwrap();
-//! let (X_train, X_test, y_train, y_test) = train_test_split(&X, &y, 0.2).unwrap();
-//! ```
-//! 
-//! This example demonstrates how to load a CSV dataset, split it into features and target, and 
-//! then split the dataset into training and testing sets, ready for model training.
+use clap::{Command, Arg};
+use dataloader_rs::lib::{CSVSecurityDataset, JSONSecurityDataset, ParquetSecurityDataset};
+use syn_crabs::setup_logging;
+use polars::prelude::CsvReader;
+use polars::prelude::*;
+use std::error::Error;
+use log::*;
+
+
+
+///## Example Usage
+/// 
+/// ```rust
+/// use hugging_datasets::{load_csv_dataset, split_X_y, train_test_split};
+/// use polars::prelude::*;
+/// 
+/// let df = load_csv_dataset("data.csv").unwrap();
+/// let (X, y) = split_X_y(&df, "target").unwrap();
+/// let (X_train, X_test, y_train, y_test) = train_test_split(&X, &y, 0.2).unwrap();
+
+/// This example demonstrates how to load a CSV dataset, split it into features and target 
+/// Split the dataset into training and testing sets, ready for model training.
 fn main() -> Result<(), Box<dyn Error>> {
     syn_crabs::setup_logging();
    
-    let matches = clap::App::new("Hugging Datasets")
+    let matches = Command::new("Hugging Datasets")
         .version("1.0")
         .about("Loads and processes datasets from various formats.")
         .arg(
