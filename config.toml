@@ -35,5 +35,5 @@ RUST_BACKTRACE = "full"
 color = "always"
 
 [lib]
-name="hugging_datasets"
+name="hugging_datasets_0x0"
 path ="src/lib.rs"

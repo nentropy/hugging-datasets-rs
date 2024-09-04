@@ -1,32 +1,29 @@
-[package]
-name = "hugging_datasets_0x0"
-version = "0.1.0"
-edition = "2021"
-
 [workspace]
 members = [
     "datasets_rs",
     "dataloader_rs",
 ]
 
+[package]
+name = "hugging_datasets_0x0"
+version = "0.1.0"
+edition = "2021"
+
 [dependencies]
 datasets_rs = { path = "./datasets_rs" }
 dataloader_rs = { path = "./dataloader_rs" }
 linfa-datasets = "0.7.0"
-csv = "1.1"
 linfa = "0.7.0"
+csv = "1.3.0"                    # Using version 1.3.0 consistently
+polars = "0.42.0"
 syn_crabs = "0.2.0"
 log = "0.4.22"
 env_logger = "0.11.5"
 clap = "4.5.16"
-polars = "0.42.0"
-uuid = { version = "1.0", features = ["serde"] }
-serde = { version = "1.0", features = ["derive"] }
-
-[lib]
-name = "hugging_datasets_0x0"
-path = "src/lib.rs"
-
-
-
-
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
+chrono = "0.4.38"
+rayon = "1.7"
+rand = "0.8"
+parking_lot = "0.12"
