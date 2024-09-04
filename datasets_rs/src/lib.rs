@@ -18,7 +18,9 @@ mod load_dataset;
 use std::error::Error;
 use std::io::Write;
 use std::fs::OpenOptions;
+use std::io::Write;
 use std::io::BufWriter;
+use parquet::file::writer::{FileWriter, SerializedFileWriter};
 use polars::prelude::*;
 use serde_json::to_string;
 
@@ -67,6 +69,7 @@ pub fn save_as_parquet<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) 
 /// let df = CsvReader::from_path("data.csv")?.infer_schema(None).finish()?;
 /// export_as_json(&df, "output.json")?;
 /// ```
+#[derive(Serialize, Deserialize)]
 pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
     let json_file = OpenOptions::new().write(true).create(true).open(file_path)?;
     let json_data = to_string(df)?;

@@ -24,12 +24,12 @@
 //! ```
 
 use arrow::record_batch::RecordBatch;
-use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
-use parquet::file::reader::{FileReader, SerializedFileReader};
+use parquet::arrow::{arrow_reader, ParquetFileArrowReader};
 use parquet::file::writer::{FileWriter, SerializedFileWriter};
 use parquet::schema::types::Type;
 use serde::{Deserialize, Serialize};
 use polars::prelude::*;
+use polars::prelude::Series;
 use std::fs::File;
 use std::sync::Arc;
 use std::path::PathBuf;
@@ -117,8 +117,8 @@ impl DataSet {
                 for batch in record_batch_reader {
                     batches.push(batch?);
                 }
-                let df: DataFrame = DataFrame::from_arrow_record_batches(&batches)?;
-                df
+                let df: DataFrame = DataFrame::from_parquet(&batches)?;
+                Ok(df)
             }
             _ => return Err("Unsupported file format".into()),
         };
@@ -196,9 +196,9 @@ impl DataSet {
         file_extension: &str,
     ) -> Result<(), Box<dyn Error>> {
         match file_extension {
-            "csv" => self.save_as_csv(&self.data, file_path)?,
-            "json" => self.export_as_json(&self.data, file_path)?,
-            "parquet" => self.save_as_parquet(&self.data, file_path)?,
+            "csv" => self::save_as_csv(&self.data, file_path)?,
+            "json" => self::export_as_json(&self.data, file_path)?,
+            "parquet" => self::save_as_parquet(&self.data, file_path)?,
             _ => return Err("Unsupported file format".into()),
         }
         Ok(())

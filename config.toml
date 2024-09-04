@@ -6,7 +6,7 @@ edition = "2021"
 exclude = ["_int/", "dist/", "py_bridge", ".github/"]
 
 [build]
-target = "x86_64-unknown-linux-gnu"
+target = "aarch64-apple-darwin"
 
 [profile.release]
 opt-level = 3

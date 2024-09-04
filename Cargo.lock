@@ -810,7 +810,6 @@ dependencies = [
  "async-std",
  "chrono",
  "csv",
- "derive",
  "dialoguer",
  "env_logger",
  "fmt",
@@ -838,7 +837,6 @@ dependencies = [
  "chrono",
  "clap",
  "csv",
- "derive",
  "dialoguer",
  "env_logger",
  "fmt",
@@ -850,18 +848,10 @@ dependencies = [
  "polars",
  "rand",
  "rayon",
- "serde",
  "serde_json",
  "simba",
  "syn_crabs",
- "uuid",
 ]
-
-[[package]]
-name = "derive"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72e3ae26c830a573f2e231fc2475f71fce4705609097cb9523abfc4007caed0b"
 
 [[package]]
 name = "dialoguer"
@@ -1174,7 +1164,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hugging_datasets"
+name = "hugging_datasets_0x0"
 version = "0.1.0"
 dependencies = [
  "clap",
@@ -1186,7 +1176,9 @@ dependencies = [
  "linfa-datasets",
  "log",
  "polars",
+ "serde",
  "syn_crabs",
+ "uuid",
 ]
 
 [[package]]
@@ -3032,6 +3024,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81dfa00651efa65069b0b6b651f4aaa31ba9e3c3ce0137aaad053604ee7e0314"
 dependencies = [
  "getrandom",
+ "serde",
 ]
 
 [[package]]

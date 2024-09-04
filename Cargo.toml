@@ -1,5 +1,5 @@
 [package]
-name = "hugging_datasets"
+name = "hugging_datasets_0x0"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,6 @@ edition = "2021"
 members = [
     "datasets_rs",
     "dataloader_rs",
-    "hugging_datasets"
 ]
 
 [dependencies]
@@ -21,9 +20,11 @@ log = "0.4.22"
 env_logger = "0.11.5"
 clap = "4.5.16"
 polars = "0.42.0"
+uuid = { version = "1.0", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
 
 [lib]
-name = "hugging_datasets"
+name = "hugging_datasets_0x0"
 path = "src/lib.rs"
 
 

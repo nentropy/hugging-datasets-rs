@@ -8,10 +8,8 @@ dialoguer = "0.11.0"
 indicatif = "0.17.8"
 nalgebra = "0.33.0"
 parquet = "53.0.0"
-serde = { version = "1.0.209", features = ["derive"] }
 simba = "0.9.0"
 syn_crabs = "0.2.0"
-uuid = { version = "1.10.0", features = ["v4"] }
 ai-dataloader = "0.6.1"
 fmt = "0.1.0"
 log = "0.4.22"

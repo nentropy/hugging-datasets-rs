@@ -120,6 +120,9 @@
 //! - Load datasets from different formats (`csv`, `json`, `parquet`).
 //! - Shuffle and split datasets into train and test sets.
 //! - Easily integrate with libraries like `linfa` for machine learning tasks.
+mod dataloader_rs;
+mod datasets_rs;
+
 use clap::{Command, Arg};
 use dataloader_rs::lib::{CSVSecurityDataset, JSONSecurityDataset, ParquetSecurityDataset};
 use syn_crabs::setup_logging;
