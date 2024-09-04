@@ -1,0 +1,6 @@
+# defaults.yaml
+dataset:
+    format: csv
+    input: data/security_dataset.csv
+    target_column: target
+    test_ratio: 0.2

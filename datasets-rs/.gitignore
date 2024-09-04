@@ -1,0 +1,10 @@
+/target
+**/*.env
+*.env
+data/
+**/py_bridge/**
+py_bridge/
+_int/
+_phishing_detection/
+target/
+_int/

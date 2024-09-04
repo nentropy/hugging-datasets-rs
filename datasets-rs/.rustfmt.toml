@@ -1,0 +1,19 @@
+# .rustfmt.toml - Rust code formatting configuration
+
+max_width = 100
+
+fn_args_layout = 'Vertical'
+
+hard_tabs = false
+
+tab_spaces = 4
+
+trailing_comma = "Always"
+
+merge_imports = true
+
+normalize_comments = true
+
+format_code_in_doc_comments = true
+
+match_arm_blocks = true

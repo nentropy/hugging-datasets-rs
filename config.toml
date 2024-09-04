@@ -1,0 +1,39 @@
+[package]
+name = "hugging_datasets_0x0"
+version = "0.1.0"
+edition = "2021"
+
+exclude = ["_int/", "dist/", "py_bridge", ".github/"]
+
+[build]
+target = "x86_64-unknown-linux-gnu"
+
+[profile.release]
+opt-level = 3
+debug = true
+
+[profile.dev]
+opt-level = 1
+debug = true
+
+[net]
+retry = 2
+timeout = 30
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.aarch64-apple-darwin]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[env]
+RUST_BACKTRACE = "full"
+
+[term]
+color = "always"
+
+[lib]
+name="hugging_datasets"
+path ="src/lib.rs"
