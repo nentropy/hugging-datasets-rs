@@ -16,11 +16,13 @@
 
 use std::error::Error;
 use std::fs::OpenOptions;
-use std::io::{BufWriter, Write};
-use parquet::file::writer::SerializedFileWriter; // Correct Parquet writer import
-use polars::prelude::*; // Importing Polars for DataFrame handling
-use serde_json::to_string; // Serde for JSON serialization
-use serde::{Serialize, Deserialize};
+use std::io::{ BufWriter, BufReader, Write, Read};
+use crate::io::Read;
+use std::fs::File;
+use polars::prelude::*;
+use std::path::Path;
+use parquet::column::page::PageWriter;
+
 
 /// Saves a DataFrame as a Parquet file.
 ///
@@ -45,7 +47,7 @@ pub fn save_as_parquet<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) 
     let writer = BufWriter::new(file);
 
     // Parquet writer implementation, you may need to use Polars' methods to write the dataframe in parquet
-    let mut writer = ParquetWriter::new(writer)?;
+    let mut writer = <dyn PageWriter>::new(writer)?;
     writer.write(&df)?;
 
     Ok(())
@@ -68,14 +70,17 @@ pub fn save_as_parquet<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) 
 /// let df = CsvReader::from_path("data.csv")?.infer_schema(None).finish()?;
 /// export_as_json(&df, "output.json")?;
 /// ```
-pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
-    let json_file = OpenOptions::new().write(true).create(true).open(file_path)?;
-    let mut file = BufWriter::new(json_file);
+pub fn export_as_json<P: AsRef<Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
+    let file = File::create(file_path)?;  
+    let mut writer = BufWriter::new(file);  
 
-    // Converting DataFrame to JSON compatible structure
-    let json_data = df.to_json()?;
-    file.write_all(json_data.as_bytes())?;
+
+    let json_data = serde_json::to_string(df)?;
+
     
+    writer.write_all(json_data.as_bytes())?;
+    writer.flush()?;
+
     Ok(())
 }
 
@@ -96,16 +101,14 @@ pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -
 /// let df = CsvReader::from_path("data.csv")?.infer_schema(None).finish()?;
 /// save_as_csv(&df, "output.csv")?;
 /// ```
-pub fn save_as_csv<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
-    let file = OpenOptions::new().write(true).create(true).open(file_path)?;
-    
-    // Writing CSV to file
-    CsvWriter::new(file)
-        .has_header(true)
-        .finish(df)?;
-        
+pub fn save_as_csv<P: AsRef<Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
+    let file = File::create(file_path)?;
+    let writer = BufWriter::new(file);  // Wrap file in a buffered writer
+    CsvWriter::new(writer)// Include header in the CSV file
+        .finish(&mut writer<DataFrame>)?;      // Write the DataFrame to the file
     Ok(())
 }
+
 
 /// Loads a dataset from a CSV file and returns a DataFrame.
 ///
@@ -115,9 +118,8 @@ pub fn save_as_csv<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> R
 /// let df = load_dataset("input.csv")?;
 /// ```
 pub fn load_dataset<P: AsRef<std::path::Path>>(file_path: P) -> Result<DataFrame, Box<dyn Error>> {
-    let df = CsvReader::from_path(file_path)?
-        .infer_schema(None)
-        .has_header(true)
+    let file = File::open(file_path)?;
+    let df = CsvReader::new(file)
         .finish()?;
     Ok(df)
 }

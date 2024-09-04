@@ -848,6 +848,7 @@ dependencies = [
  "polars",
  "rand",
  "rayon",
+ "serde",
  "serde_json",
  "simba",
  "syn_crabs",
@@ -1167,6 +1168,7 @@ dependencies = [
 name = "hugging_datasets_0x0"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "clap",
  "csv",
  "dataloader_rs",
@@ -1175,8 +1177,12 @@ dependencies = [
  "linfa",
  "linfa-datasets",
  "log",
+ "parking_lot",
  "polars",
+ "rand",
+ "rayon",
  "serde",
+ "serde_json",
  "syn_crabs",
  "uuid",
 ]

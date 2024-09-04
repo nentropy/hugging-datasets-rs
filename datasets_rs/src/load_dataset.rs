@@ -5,6 +5,7 @@
 //! the dataset into `X` (features) and `y` (target) for machine learning tasks.
 
 use parquet::file::reader::SerializedFileReader;
+use parquet::file::writer::{FileWriter, SerializedFileWriter};
 use polars::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -50,7 +51,8 @@ impl DataSet {
             "json" => {
                 let json_file = File::open(path)?;
                 let reader = BufReader::new(json_file);
-                let records: Vec<SecurityRecord> = serde_json::from_reader(reader)?;
+                let json_data: Vec<_> = serde_json::from_reader(BufReader::new(json_file))?;
+                let records: Vec<SecurityRecord> = serde_json::from_reader(json_data)?;
                 
                 let df = DataFrame::new(vec![
                     Series::new("uuid", records.iter().map(|r| r.uuid.to_string()).collect::<Vec<String>>()),
@@ -79,10 +81,19 @@ impl DataSet {
         Ok(())
     }
 
+    /// Load JSON data from a file
+    fn load_json(file_path: &str) -> Result<serde_json::Value, Box<dyn Error>> {
+        let file = File::open(file_path)?;
+        let reader = BufReader::new(file);
+        let json_data: serde_json::Value = from_reader(reader)?;
+        Ok(json_data)
+    }
+
     /// Save the dataset as a JSON file.
     pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
-        let json_file = OpenOptions::new().write(true).create(true).open(file_path)?;
-        let mut writer = BufWriter::new(json_file);
+        let json_file = File::create("output.json")?;
+        let mut file = BufWriter::new(json_file);
+        let mut writer: Box<dyn PageWriter> = PageWriter::new(file);
 
         let json: Vec<_> = df.iter().map(|s| s.to_string()).collect(); // Convert DataFrame to rows of strings
         let json_data = serde_json::to_string(&json)?; // Serialize to JSON string
@@ -90,12 +101,12 @@ impl DataSet {
         Ok(())
     }
 
-    /// Save the dataset as a CSV file.
-    pub fn save_as_csv<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
-        let file = OpenOptions::new().write(true).create(true).open(file_path)?;
-        CsvWriter::new(file)
-            .has_header(true)
-            .finish(df)?;
+
+    /// Save DataFrame as a CSV file
+    fn save_as_csv(df: &DataFrame, file_path: &str) -> Result<(), Box<dyn Error>> {
+        let file = File::create(file_path)?;
+        let writer = BufWriter::new(file);
+        CsvWriter::new(writer).finish(df)?;
         Ok(())
     }
 
@@ -112,5 +123,12 @@ impl DataSet {
             _ => return Err("Unsupported file format".into()),
         }
         Ok(())
+    }
+
+
+    fn load_csv(file_path: &str) -> Result<DataFrame, Box<dyn Error>> {
+        let file = File::open(file_path)?;
+        let df = CsvReader::new(file).finish()?;
+        Ok(df)
     }
 }
