@@ -13,19 +13,14 @@
 //! ### Loading and Saving
 //! The core module provides functions for loading datasets from CSV, JSON, and Parquet formats,
 //! and saving them into one of these formats based on user input.
-mod load_dataset;
 
 use std::error::Error;
-use std::io::Write;
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::io::BufWriter;
-use parquet::file::writer::{FileWriter, SerializedFileWriter};
-use polars::prelude::*;
-use serde_json::to_string;
-
-/// Defaults:
-
+use std::io::{BufWriter, Write};
+use parquet::file::writer::SerializedFileWriter; // Correct Parquet writer import
+use polars::prelude::*; // Importing Polars for DataFrame handling
+use serde_json::to_string; // Serde for JSON serialization
+use serde::{Serialize, Deserialize};
 
 /// Saves a DataFrame as a Parquet file.
 ///
@@ -48,7 +43,11 @@ pub fn save_as_parquet<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) 
     let path = file_path.as_ref();
     let file = OpenOptions::new().write(true).create(true).open(path)?;
     let writer = BufWriter::new(file);
-    ParquetWriter::new(writer).finish(df)?;
+
+    // Parquet writer implementation, you may need to use Polars' methods to write the dataframe in parquet
+    let mut writer = ParquetWriter::new(writer)?;
+    writer.write(&df)?;
+
     Ok(())
 }
 
@@ -69,11 +68,14 @@ pub fn save_as_parquet<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) 
 /// let df = CsvReader::from_path("data.csv")?.infer_schema(None).finish()?;
 /// export_as_json(&df, "output.json")?;
 /// ```
-#[derive(Serialize, Deserialize)]
 pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
     let json_file = OpenOptions::new().write(true).create(true).open(file_path)?;
-    let json_data = to_string(df)?;
-    std::fs::write(json_file, json_data)?;
+    let mut file = BufWriter::new(json_file);
+
+    // Converting DataFrame to JSON compatible structure
+    let json_data = df.to_json()?;
+    file.write_all(json_data.as_bytes())?;
+    
     Ok(())
 }
 
@@ -96,11 +98,12 @@ pub fn export_as_json<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -
 /// ```
 pub fn save_as_csv<P: AsRef<std::path::Path>>(df: &DataFrame, file_path: P) -> Result<(), Box<dyn Error>> {
     let file = OpenOptions::new().write(true).create(true).open(file_path)?;
-    let mut buf: Vec<u8> = Vec::new();
-    CsvWriter::new(&mut buf).finish(&df)?;
+    
+    // Writing CSV to file
     CsvWriter::new(file)
         .has_header(true)
         .finish(df)?;
+        
     Ok(())
 }
 
